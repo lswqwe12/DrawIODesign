@@ -6,15 +6,17 @@ import { Button } from "@/components/ui/button";
 import { PromptDialog } from "@/components/ui/prompt-dialog";
 import { toast } from "@/components/ui/toast";
 import { useFileSystemStore } from "@/contexts/FileSystemContext";
+import { useDrawio } from "@/hooks/useDrawio";
 import { ensureDrawioName } from "@/components/FileManager/FileOperations";
 
 type DialogKind = "new-file" | "new-folder";
 
 /**
  * 编辑器空状态：当没有打开任何文件时，居中展示「新建文件 / 新建文件夹 / 导入」，
- * 行为与左侧目录栏三点菜单完全一致（创建到当前选中文件夹，创建后不自动打开）。
+ * 行为与左侧目录栏三点菜单完全一致（创建到当前选中文件夹）；新建文件后会自动选中并打开。
  */
 export function EditorEmptyState() {
+  const { requestOpenFile } = useDrawio();
   const selectedFolderId = useFileSystemStore((s) => s.selectedFolderId);
   const createFile = useFileSystemStore((s) => s.createFile);
   const createFolder = useFileSystemStore((s) => s.createFolder);
@@ -25,7 +27,14 @@ export function EditorEmptyState() {
 
   const handleCreateFile = (name: string) => {
     void createFile(ensureDrawioName(name), selectedFolderId)
-      .then(() => toast({ title: "已创建文件", variant: "success" }))
+      .then(async (file) => {
+        toast({ title: "已创建文件", variant: "success" });
+        // 新建后默认选中并打开该文件（激活标签页、编辑器展示）
+        await requestOpenFile(file.id, {
+          chartXML: file.xml,
+          isAIGenerated: false,
+        });
+      })
       .catch((err: unknown) =>
         toast({
           title: "创建失败",

@@ -326,8 +326,10 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
         onDragStart={(e) => onDragStart(e, "file", file.id)}
         onDragEnd={onDragEnd}
         className={cn(
-          "flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-1 text-sm hover:bg-accent",
-          isSelected && "bg-primary text-primary-foreground"
+          "flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-1 text-sm",
+          isSelected
+            ? "bg-primary text-primary-foreground"
+            : "text-foreground hover:bg-accent"
         )}
         style={{ paddingLeft: depth * 14 + 6 }}
         onClick={() => selectFile(file.id)}
@@ -369,8 +371,10 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
             onDropTo(e, node.id);
           }}
           className={cn(
-            "flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-1 text-sm hover:bg-accent",
-            isSelected && "bg-primary text-primary-foreground",
+            "flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-1 text-sm",
+            isSelected
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-accent",
             isDragOver && "ring-1 ring-primary"
           )}
           style={{ paddingLeft: depth * 14 + 6 }}
@@ -443,10 +447,10 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
         }}
         onDrop={(e) => onDropTo(e, null)}
         className={cn(
-          "flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-1 hover:bg-accent",
-          selectedFolderId === null &&
-            selectedFileId === null &&
-            "bg-primary text-primary-foreground",
+          "flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-1",
+          selectedFolderId === null && selectedFileId === null
+            ? "bg-primary text-primary-foreground"
+            : "text-foreground hover:bg-accent",
           rootIsDragOver && "ring-1 ring-primary"
         )}
         onClick={() => {
