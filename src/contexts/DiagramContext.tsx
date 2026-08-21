@@ -72,6 +72,8 @@ export interface DiagramContextValue {
   cancelPendingSave: () => void;
   /** 切换打开文件（含未保存更改拦截）：返回 false 表示用户取消切换 */
   requestOpenFile: (fileId: string, initial?: Partial<DiagramState>) => Promise<boolean>;
+  /** 关闭标签页（含未保存更改拦截）：返回 false 表示用户取消关闭 */
+  requestCloseFile: (fileId: string) => Promise<boolean>;
   saveDiagram: () => Promise<void>;
   clearDiagram: () => void;
 }
@@ -423,13 +425,77 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
           cancelPendingSave();
           if (choice === "save") {
             await saveDiagram();
+          } else {
+            // 丢弃更改：回退到最近一次已落库内容，并清除脏标记，
+            // 避免多标签页下残留的 dirty 状态在后续切换时误触发拦截。
+            updateState(currentId, { dirty: false, saveStatus: "saved" });
           }
         }
       }
       loadDiagram(fileId, initial);
       return true;
     },
-    [getState, askUnsaved, getFileName, cancelPendingSave, saveDiagram, loadDiagram]
+    [getState, askUnsaved, getFileName, cancelPendingSave, saveDiagram, loadDiagram, updateState]
+  );
+
+  /**
+   * 关闭标签页（带未保存更改拦截）。
+   * - 目标文件有未保存更改时，弹窗让用户选择「保存 / 不保存 / 取消」。
+   * - 返回 false 表示用户取消关闭。
+   * - 关闭的是当前活跃文件时，自动切换到相邻标签。
+   */
+  const requestCloseFile = useCallback(
+    async (fileId: string): Promise<boolean> => {
+      const current = getState(fileId);
+      if (current?.dirty) {
+        const choice = await askUnsaved(getFileName(fileId));
+        if (choice === "cancel") return false;
+        cancelPendingSave();
+        if (choice === "save") {
+          // 仅当目标是当前活跃文件时才可导出保存；
+          // 非活跃标签在切换离开时已落库，理论上不会处于 dirty 状态。
+          if (activeFileIdRef.current === fileId) {
+            await saveDiagram();
+          } else {
+            updateState(fileId, { dirty: false, saveStatus: "saved" });
+          }
+        } else {
+          updateState(fileId, { dirty: false, saveStatus: "saved" });
+        }
+      }
+
+      // 关闭前记录是否为目标活跃文件，并预取相邻标签（关闭后 states 已不含 fileId）
+      const wasActive = activeFileIdRef.current === fileId;
+      const remaining = Array.from(states.keys()).filter((id) => id !== fileId);
+      closeDiagram(fileId);
+
+      if (wasActive) {
+        const nextId = remaining[0] ?? null;
+        if (nextId) {
+          loadDiagram(nextId);
+        } else {
+          // 关闭最后一个标签页后清空编辑器，避免残留上一份图表内容
+          setActiveFileId(null);
+          const empty = wrapMxCells("");
+          setChartXML(empty);
+          setLatestSvg("");
+          latestXmlRef.current = empty;
+        }
+      }
+      return true;
+    },
+    [
+      getState,
+      askUnsaved,
+      getFileName,
+      cancelPendingSave,
+      saveDiagram,
+      updateState,
+      closeDiagram,
+      loadDiagram,
+      setActiveFileId,
+      states,
+    ]
   );
 
   const clearDiagram = useCallback(() => {
@@ -463,6 +529,7 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
       flushPendingSave,
       cancelPendingSave,
       requestOpenFile,
+      requestCloseFile,
       saveDiagram,
       clearDiagram,
     }),
@@ -488,6 +555,7 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
       flushPendingSave,
       cancelPendingSave,
       requestOpenFile,
+      requestCloseFile,
       saveDiagram,
       clearDiagram,
     ]

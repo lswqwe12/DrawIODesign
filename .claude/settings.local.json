@@ -69,7 +69,13 @@
       "Bash(curl -s \"https://embed.diagrams.net/js/PostConfig.js\" -o PostConfig.js)",
       "Bash(npm test:*)",
       "Bash(/Users/liaosiwei/Documents/SanXiaProjects/ai-contest/README.md:*)",
-      "Bash(/Users/liaosiwei/Documents/SanXiaProjects/ai-contest/docs/后续优化与开发路线图.md:*)"
+      "Bash(/Users/liaosiwei/Documents/SanXiaProjects/ai-contest/docs/后续优化与开发路线图.md:*)",
+      "Bash(rg:*)",
+      "Bash(cat node_modules/react-drawio/dist/*.d.ts)",
+      "Bash(curl -s --max-time 15 https://www.drawio.com/doc/faq/embed-mode)",
+      "Bash(grep -oiE '\\(noSaveBtn|saveAndExit|noExitBtn|footer|github|chrome|toolbar\\)[^<]{0,120}')",
+      "Bash(curl -s --max-time 10 -o /tmp/drawio-docs.html -w \"%{http_code}\" \"https://www.drawio.com/doc/faq/embed-mode\")",
+      "Bash(find node_modules -iname *.js -path *drawio*)"
     ]
   }
 }

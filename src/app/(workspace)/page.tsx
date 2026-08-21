@@ -10,6 +10,9 @@ import FileManager from "@/components/FileManager";
 import { AIPanel } from "@/components/AIPanel/AIPanel";
 import { TopBar } from "@/components/Layout/TopBar";
 import { StatusBar } from "@/components/Layout/StatusBar";
+import { EditorTabs } from "@/components/Layout/EditorTabs";
+import { EditorEmptyState } from "@/components/Layout/EditorEmptyState";
+import { toast } from "@/components/ui/toast";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -18,7 +21,7 @@ import {
 import type { FileMeta } from "@/types/file";
 
 function Workspace() {
-  const { requestOpenFile } = useDrawio();
+  const { requestOpenFile, activeFileId } = useDrawio();
   const init = useFileSystemStore((s) => s.init);
 
   useEffect(() => {
@@ -37,7 +40,11 @@ function Workspace() {
         isAIGenerated: false,
       });
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "打开文件失败");
+      toast({
+        title: "打开文件失败",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
     }
   };
 
@@ -52,7 +59,12 @@ function Workspace() {
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={57} minSize={30}>
-            <DiagramEditor />
+            <div className="flex h-full flex-col">
+              <EditorTabs />
+              <div className="min-h-0 flex-1">
+                {activeFileId ? <DiagramEditor /> : <EditorEmptyState />}
+              </div>
+            </div>
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={25} minSize={15}>

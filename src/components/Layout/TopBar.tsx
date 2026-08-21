@@ -3,6 +3,7 @@
 import { FileCode2, ImageDown, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDrawio } from "@/hooks/useDrawio";
+import { toast } from "@/components/ui/toast";
 
 /**
  * 顶部栏：显式保存、导出 PNG/SVG。
@@ -11,13 +12,25 @@ import { useDrawio } from "@/hooks/useDrawio";
 export function TopBar() {
   const { handleExport, saveDiagram } = useDrawio();
 
+  const handleSave = () => {
+    void saveDiagram()
+      .then(() => toast({ title: "已保存", variant: "success" }))
+      .catch((err: unknown) =>
+        toast({
+          title: "保存失败",
+          description: err instanceof Error ? err.message : String(err),
+          variant: "destructive",
+        })
+      );
+  };
+
   return (
     <header className="flex items-center justify-end gap-2 border-b px-3 py-2">
       <div className="flex shrink-0 items-center gap-1">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void saveDiagram()}
+          onClick={handleSave}
         >
           <Save />
           保存

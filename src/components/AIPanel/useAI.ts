@@ -7,6 +7,7 @@ import { useDrawio } from "@/hooks/useDrawio";
 import { useFileSystemStore } from "@/contexts/FileSystemContext";
 import { ensureDrawioName } from "@/components/FileManager/FileOperations";
 import { sanitizeGeneratedCells, wrapMxCells } from "@/lib/xml-helper";
+import { toast } from "@/components/ui/toast";
 
 function generateId(): string {
   return typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -183,6 +184,7 @@ export function useAI(): UseAIReturn {
         const file = await createFile(name, selectedFolderId, wrapped);
         loadDiagram(file.id, { chartXML: wrapped, isAIGenerated: false });
         patchMessage(assistantMsg.id, { content: "已生成图表，并加载到编辑器。", xml: cells });
+        toast({ title: "已生成图表", variant: "success" });
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         patchMessage(assistantMsg.id, {

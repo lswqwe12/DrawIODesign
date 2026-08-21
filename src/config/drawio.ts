@@ -12,6 +12,8 @@ import type { UrlParameters } from "react-drawio";
  * - noSaveBtn/noExitBtn：隐藏 draw.io 自带的 Save/Exit 按钮，保存统一由宿主触发，
  *   避免触发 react-drawio 的 save→export 回环 bug（该 bug 会把导出产物 data.data
  *   误当作 XML 传给 onSave，导致落库内容损坏）。
+ *   注意：noSaveBtn=1 在 draw.io 中并非「隐藏 Save」，而是把 Save 替换成
+ *   「Save & Exit」，因此需额外显式 saveAndExit=0 才能彻底去掉右上角按钮。
  * - spin：加载时显示 spinner；libraries：启用图形库侧栏。
  */
 export const drawioUrlParameters: UrlParameters = {
@@ -20,4 +22,5 @@ export const drawioUrlParameters: UrlParameters = {
   libraries: true,
   noSaveBtn: true,
   noExitBtn: true,
+  saveAndExit: false,
 };

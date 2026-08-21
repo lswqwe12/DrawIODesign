@@ -5,9 +5,12 @@ import { FileText, MoreHorizontal, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useFileSystemStore } from "@/contexts/FileSystemContext";
+import { useDrawio } from "@/hooks/useDrawio";
 import { FileTree } from "./FileTree";
 import { ContextMenu, type ContextMenuItem } from "./ContextMenu";
 import { ensureDrawioName } from "./FileOperations";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
+import { toast } from "@/components/ui/toast";
 import type { FileMeta } from "@/types/file";
 
 interface FileManagerProps {
@@ -20,12 +23,16 @@ interface MenuPos {
   y: number;
 }
 
+/** 当前打开的输入对话框类型 */
+type DialogKind = "new-file" | "new-folder";
+
 /**
  * FileManager —— Explorer 容器：搜索框（右侧三点菜单收纳新建/导入）+ 树形目录。
  * 文件与文件夹合并为一棵树，文件夹展开直接展示子文件夹与文件。
  * 文件管理区的唯一对外入口（架构文档 §5.5）。
  */
 export default function FileManager({ onOpenFile }: FileManagerProps) {
+  const { requestOpenFile } = useDrawio();
   const selectedFolderId = useFileSystemStore((s) => s.selectedFolderId);
   const files = useFileSystemStore((s) => s.files);
   const createFile = useFileSystemStore((s) => s.createFile);
@@ -36,6 +43,7 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPos>({ x: 0, y: 0 });
+  const [dialog, setDialog] = useState<DialogKind | null>(null);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -45,23 +53,47 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
       .slice(0, 50);
   }, [files, query]);
 
-  const handleNewFile = () => {
-    const name = window.prompt("文件名称", "未命名.drawio");
-    if (!name?.trim()) return;
-    void createFile(ensureDrawioName(name), selectedFolderId);
+  const handleCreateFile = (name: string) => {
+    void createFile(ensureDrawioName(name), selectedFolderId)
+      .then(async (file) => {
+        toast({ title: "已创建文件", variant: "success" });
+        // 新建后默认选中并打开该文件（激活标签页、编辑器展示）
+        await requestOpenFile(file.id, {
+          chartXML: file.xml,
+          isAIGenerated: false,
+        });
+      })
+      .catch((err: unknown) =>
+        toast({
+          title: "创建失败",
+          description: err instanceof Error ? err.message : String(err),
+          variant: "destructive",
+        })
+      );
   };
 
-  const handleNewFolder = () => {
-    const name = window.prompt("文件夹名称", "新建文件夹");
-    if (!name?.trim()) return;
-    void createFolder(name.trim(), selectedFolderId);
+  const handleCreateFolder = (name: string) => {
+    void createFolder(name, selectedFolderId)
+      .then(() => toast({ title: "已创建文件夹", variant: "success" }))
+      .catch((err: unknown) =>
+        toast({
+          title: "创建失败",
+          description: err instanceof Error ? err.message : String(err),
+          variant: "destructive",
+        })
+      );
   };
 
   const handleImport = async (file: File) => {
     try {
       await importFile(file, selectedFolderId);
+      toast({ title: "导入成功", variant: "success" });
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "导入失败");
+      toast({
+        title: "导入失败",
+        description: err instanceof Error ? err.message : String(err),
+        variant: "destructive",
+      });
     }
   };
 
@@ -81,8 +113,8 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
   };
 
   const menuItems: ContextMenuItem[] = [
-    { label: "新建文件", onSelect: handleNewFile },
-    { label: "新建文件夹", onSelect: handleNewFolder },
+    { label: "新建文件", onSelect: () => setDialog("new-file") },
+    { label: "新建文件夹", onSelect: () => setDialog("new-folder") },
     { label: "导入", onSelect: () => fileInputRef.current?.click() },
   ];
 
@@ -161,6 +193,32 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
           onClose={() => setMenuOpen(false)}
         />
       )}
+
+      <PromptDialog
+        open={dialog === "new-file"}
+        title="新建文件"
+        label="文件名称"
+        defaultValue="未命名.drawio"
+        placeholder="例如：类图.drawio"
+        confirmText="创建"
+        onCancel={() => setDialog(null)}
+        onConfirm={(v) => {
+          setDialog(null);
+          handleCreateFile(v);
+        }}
+      />
+      <PromptDialog
+        open={dialog === "new-folder"}
+        title="新建文件夹"
+        label="文件夹名称"
+        defaultValue="新建文件夹"
+        confirmText="创建"
+        onCancel={() => setDialog(null)}
+        onConfirm={(v) => {
+          setDialog(null);
+          handleCreateFolder(v);
+        }}
+      />
     </div>
   );
 }
