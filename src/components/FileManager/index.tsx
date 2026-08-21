@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, MoreHorizontal, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
   const importFile = useFileSystemStore((s) => s.importFile);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<MenuPos>({ x: 0, y: 0 });
@@ -52,6 +53,13 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
       .filter((f) => f.name.toLowerCase().includes(q))
       .slice(0, 50);
   }, [files, query]);
+
+  // 响应全局快捷键 ⌘/Ctrl + K：聚焦搜索框
+  useEffect(() => {
+    const onFocusSearch = () => searchInputRef.current?.focus();
+    window.addEventListener("ai-contest:focus-search", onFocusSearch);
+    return () => window.removeEventListener("ai-contest:focus-search", onFocusSearch);
+  }, []);
 
   const handleCreateFile = (name: string) => {
     void createFile(ensureDrawioName(name), selectedFolderId)
@@ -125,6 +133,7 @@ export default function FileManager({ onOpenFile }: FileManagerProps) {
         <div className="relative min-w-0 flex-1">
           <Search className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="搜索文件…"

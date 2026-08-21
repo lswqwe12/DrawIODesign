@@ -210,6 +210,7 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
           isAIGenerated: false,
           dirty: false,
           saveStatus: "saved",
+          lastSavedAt: Date.now(),
         });
       } catch (err) {
         updateState(fileId, { dirty: true, saveStatus: "dirty" });

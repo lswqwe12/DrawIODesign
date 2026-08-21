@@ -12,6 +12,8 @@ import { TopBar } from "@/components/Layout/TopBar";
 import { StatusBar } from "@/components/Layout/StatusBar";
 import { EditorTabs } from "@/components/Layout/EditorTabs";
 import { EditorEmptyState } from "@/components/Layout/EditorEmptyState";
+import { KeyboardShortcuts } from "@/components/Layout/KeyboardShortcuts";
+import { OnboardingDialog } from "@/components/Layout/OnboardingDialog";
 import { toast } from "@/components/ui/toast";
 import {
   ResizableHandle,
@@ -51,6 +53,8 @@ function Workspace() {
   return (
     <div className="flex h-screen flex-col">
       <TopBar />
+      <KeyboardShortcuts />
+      <OnboardingDialog />
 
       <div className="min-h-0 flex-1">
         <ResizablePanelGroup direction="horizontal">

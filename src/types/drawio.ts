@@ -37,4 +37,5 @@ export interface DiagramState {
   isAIGenerated: boolean; // 是否由 AI 片段首次包装而来（决定是否需要 wrapMxCells）
   dirty: boolean; // 是否有未保存更改
   saveStatus: SaveStatus;
+  lastSavedAt?: number; // 最近一次成功落库的时间戳（用于状态栏展示）
 }

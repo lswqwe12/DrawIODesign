@@ -61,7 +61,7 @@ export function AIPanel() {
       <header className="border-b px-3 py-2 text-sm font-medium">AI 助手</header>
 
       <div className="flex-1 space-y-3 overflow-auto p-3">
-        <ChatHistory messages={messages} />
+        <ChatHistory messages={messages} onSelectPrompt={setInput} />
       </div>
 
       <div className="space-y-2 border-t p-3">

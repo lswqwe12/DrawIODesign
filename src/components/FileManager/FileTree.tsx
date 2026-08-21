@@ -4,10 +4,14 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ChevronDown,
   ChevronRight,
+  FilePlus2,
   FileText,
   Folder,
   FolderOpen,
+  FolderPlus,
+  Upload,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useFileSystemStore } from "@/contexts/FileSystemContext";
 import { useDrawio } from "@/hooks/useDrawio";
 import { ContextMenu, type ContextMenuItem } from "./ContextMenu";
@@ -105,7 +109,9 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
   const moveFile = useFileSystemStore((s) => s.moveFile);
   const deleteFile = useFileSystemStore((s) => s.deleteFile);
   const duplicateFile = useFileSystemStore((s) => s.duplicateFile);
+  const importFile = useFileSystemStore((s) => s.importFile);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set([ROOT_FOLDER_ID])
   );
@@ -190,6 +196,15 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
       description: err instanceof Error ? err.message : String(err),
       variant: "destructive",
     });
+
+  const handleImport = async (file: File) => {
+    try {
+      await importFile(file, null);
+      toast({ title: "导入成功", variant: "success" });
+    } catch (err) {
+      showError("导入失败")(err);
+    }
+  };
 
   // ---- 拖拽处理 ----
   const onDragStart = (
@@ -423,6 +438,7 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
 
   const rootIsOpen = expanded.has(ROOT_FOLDER_ID);
   const rootIsDragOver = dragOver === ROOT_FOLDER_ID;
+  const isEmpty = folders.length === 0 && files.length === 0;
 
   // 移动对话框的排除项 / 默认项
   const moveExclude =
@@ -479,8 +495,44 @@ export function FileTree({ onOpenFile }: FileTreeProps) {
         <>
           {roots.map((node) => renderFolder(node, 1))}
           {rootFiles.map((file) => renderFile(file, 1))}
+          {isEmpty ? (
+            <div className="mt-1 flex flex-col items-center gap-2 rounded-md border border-dashed p-3 text-center">
+              <p className="text-xs text-muted-foreground">还没有任何设计，从这里开始</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button size="sm" onClick={() => setDialog({ kind: "new-file", parentId: null })}>
+                  <FilePlus2 />
+                  新建文件
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDialog({ kind: "new-folder", parentId: null })}
+                >
+                  <FolderPlus />
+                  新建文件夹
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                  <Upload />
+                  导入
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </>
       )}
+      {/* 隐藏的文件导入输入（空状态「导入」按钮触发） */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".drawio,.xml"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleImport(file);
+          e.target.value = "";
+        }}
+      />
+
       {menu && <ContextMenu {...menu} onClose={() => setMenu(null)} />}
 
       {/* 新建文件 */}
