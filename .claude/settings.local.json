@@ -75,7 +75,11 @@
       "Bash(curl -s --max-time 15 https://www.drawio.com/doc/faq/embed-mode)",
       "Bash(grep -oiE '\\(noSaveBtn|saveAndExit|noExitBtn|footer|github|chrome|toolbar\\)[^<]{0,120}')",
       "Bash(curl -s --max-time 10 -o /tmp/drawio-docs.html -w \"%{http_code}\" \"https://www.drawio.com/doc/faq/embed-mode\")",
-      "Bash(find node_modules -iname *.js -path *drawio*)"
+      "Bash(find node_modules -iname *.js -path *drawio*)",
+      "Bash(sed -n 1,60p)",
+      "Bash(ls src/**/*.test.* src/**/**/*.test.*)",
+      "Bash(find /Users/liaosiwei/Documents/SanXiaProjects/ai-contest/node_modules/react-drawio -name *.md)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

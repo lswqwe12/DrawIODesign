@@ -7,6 +7,8 @@ export interface AIRequestOptions {
   prompt: string;
   xml?: string; // interpret 模式：xmlsvg 导出得到的图表 XML
   image?: string; // interpret 模式：缩放后的 PNG data URL（备用）
+  currentXml?: string; // generate 迭代模式：当前图表的 mxCell 片段（增量修改上下文）
+  diagramType?: string; // generate 模式：图表类型（类图/时序图/用例图/流程图/ER 图等）
 }
 
 const ENDPOINTS: Record<AIMode, string> = {
@@ -30,6 +32,8 @@ export async function streamAI(
       prompt: options.prompt,
       xml: options.xml,
       image: options.image,
+      currentXml: options.currentXml,
+      diagramType: options.diagramType,
     }),
     signal,
   });

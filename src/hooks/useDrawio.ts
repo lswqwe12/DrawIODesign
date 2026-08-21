@@ -33,6 +33,7 @@ export type UseDrawioReturn = Pick<
   | "requestOpenFile"
   | "saveDiagram"
   | "clearDiagram"
+  | "applyLayout"
 >;
 
 export function useDrawio(): UseDrawioReturn {

@@ -4,6 +4,11 @@
 export type AIMode = "interpret" | "generate";
 
 /**
+ * 生成目标：当前文件（迭代修改）或 新建文件（一次性生成）
+ */
+export type GenerateTarget = "current" | "new";
+
+/**
  * AI 流式输出分块
  * - start: 流开始
  * - content: 文本内容增量
@@ -26,5 +31,6 @@ export interface ChatMessage {
   content: string;
   mode?: AIMode;
   xml?: string; // 生成模式下携带的最终 mxCell 片段
+  error?: boolean; // 该消息是否以错误/失败结束（用于渲染「重试」按钮）
   createdAt: number;
 }

@@ -76,6 +76,8 @@ export interface DiagramContextValue {
   requestCloseFile: (fileId: string) => Promise<boolean>;
   saveDiagram: () => Promise<void>;
   clearDiagram: () => void;
+  /** 自动布局：调用 draw.io 布局动作（layouts 为布局名数组，如 ["verticalTree"]） */
+  applyLayout: (layouts: string[]) => void;
 }
 
 /** 导出结果：xml 为图表 XML，data 为导出内容（SVG 文本 / PNG data URL） */
@@ -505,6 +507,12 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
     latestXmlRef.current = empty;
   }, []);
 
+  /** 自动布局：转发给 react-drawio 门面的 layout 动作（等价 Arrange > Layout > Apply） */
+  const applyLayout = useCallback((layouts: string[]) => {
+    if (!drawioRef.current || !layouts.length) return;
+    drawioRef.current.layout({ layouts });
+  }, []);
+
   const value = useMemo<DiagramContextValue>(
     () => ({
       states,
@@ -532,6 +540,7 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
       requestCloseFile,
       saveDiagram,
       clearDiagram,
+      applyLayout,
     }),
     [
       states,
@@ -558,6 +567,7 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
       requestCloseFile,
       saveDiagram,
       clearDiagram,
+      applyLayout,
     ]
   );
 

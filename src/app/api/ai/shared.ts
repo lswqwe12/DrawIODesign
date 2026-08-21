@@ -44,10 +44,12 @@ function errorResponse(message: string, status = 500): Response {
  * 调用 DeepSeek 流式接口，并返回可直接交给前端的 SSE Response。
  * @param messages 对话消息
  * @param onEnd 流结束后基于完整文本生成 end 分块的补充字段（generate 模式用于提取 xml）
+ * @param opts temperature 等上游采样参数（迭代修改时调低，减少整图重建）
  */
 export async function createAIStream(
   messages: LLMMessage[],
-  onEnd?: (fullText: string) => Partial<AIStreamChunk>
+  onEnd?: (fullText: string) => Partial<AIStreamChunk>,
+  opts?: { temperature?: number }
 ): Promise<Response> {
   if (!DEEPSEEK_API_KEY) {
     return errorResponse("服务端未配置 DEEPSEEK_API_KEY");
@@ -65,7 +67,7 @@ export async function createAIStream(
         model: DEEPSEEK_MODEL,
         messages,
         stream: true,
-        temperature: 0.7,
+        temperature: opts?.temperature ?? 0.7,
       }),
     });
   } catch (err) {
