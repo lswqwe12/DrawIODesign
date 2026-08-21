@@ -1,15 +1,7 @@
 "use client";
 
-import type { AIMode, AIStreamChunk } from "@/types/ai";
-
-export interface AIRequestOptions {
-  mode: AIMode;
-  prompt: string;
-  xml?: string; // interpret 模式：xmlsvg 导出得到的图表 XML
-  image?: string; // interpret 模式：缩放后的 PNG data URL（备用）
-  currentXml?: string; // generate 迭代模式：当前图表的 mxCell 片段（增量修改上下文）
-  diagramType?: string; // generate 模式：图表类型（类图/时序图/用例图/流程图/ER 图等）
-}
+import type { AIRequestOptions, AIStreamChunk, AIMode } from "@/types/ai";
+import { streamAIDirect, hasClientAIKey } from "./aiClient";
 
 const ENDPOINTS: Record<AIMode, string> = {
   interpret: "/api/ai/interpret",
@@ -17,14 +9,22 @@ const ENDPOINTS: Record<AIMode, string> = {
 };
 
 /**
- * 调用 AI 路由并逐块解析 SSE（data: <json>\n\n），
- * 每解析到一个 AIStreamChunk 就回调 onChunk。
+ * 调用 AI 并逐块解析 SSE（data: <json>\n\n），每解析到一个 AIStreamChunk 就回调 onChunk。
+ *
+ * 双通道自动切换：
+ * - 配置了 NEXT_PUBLIC_DEEPSEEK_API_KEY（GitHub Pages 静态部署）→ 浏览器直连 DeepSeek。
+ * - 否则 → 走服务端代理 /api/ai/*（本地开发 / 自托管，密钥保留在服务端）。
  */
 export async function streamAI(
   options: AIRequestOptions,
   onChunk: (chunk: AIStreamChunk) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  if (hasClientAIKey()) {
+    await streamAIDirect(options, onChunk, signal);
+    return;
+  }
+
   const res = await fetch(ENDPOINTS[options.mode], {
     method: "POST",
     headers: { "Content-Type": "application/json" },

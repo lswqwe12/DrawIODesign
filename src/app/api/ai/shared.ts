@@ -2,7 +2,7 @@
  * AI 路由共享工具（仅服务端使用，禁止在客户端 import）。
  * 负责调用 DeepSeek 流式接口，并把上游 SSE 转换为前端约定的 AIStreamChunk SSE。
  */
-import type { AIStreamChunk } from "@/types/ai";
+import type { AIStreamChunk, LLMMessage } from "@/types/ai";
 
 export const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 export const DEEPSEEK_BASE_URL =
@@ -12,15 +12,7 @@ export const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 /** interpret 图片字段大小上限（9MB） */
 export const MAX_IMAGE_BYTES = 9 * 1024 * 1024;
 
-export interface LLMMessage {
-  role: "system" | "user" | "assistant";
-  content:
-    | string
-    | Array<
-        | { type: "text"; text: string }
-        | { type: "image_url"; image_url: { url: string } }
-      >;
-}
+export type { LLMMessage };
 
 interface DeepSeekChunk {
   choices?: { delta?: { content?: string } }[];

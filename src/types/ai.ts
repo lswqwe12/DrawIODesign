@@ -9,6 +9,32 @@ export type AIMode = "interpret" | "generate";
 export type GenerateTarget = "current" | "new";
 
 /**
+ * 发送给大模型的对话消息（服务端代理与客户端直连共用）。
+ * content 支持纯文本或多模态内容（文本 + 图片）。
+ */
+export interface LLMMessage {
+  role: "system" | "user" | "assistant";
+  content:
+    | string
+    | Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+      >;
+}
+
+/**
+ * AI 请求参数（服务端代理与客户端直连共用）。
+ */
+export interface AIRequestOptions {
+  mode: AIMode;
+  prompt: string;
+  xml?: string; // interpret 模式：xmlsvg 导出得到的图表 XML
+  image?: string; // interpret 模式：缩放后的 PNG data URL（备用）
+  currentXml?: string; // generate 迭代模式：当前图表的 mxCell 片段（增量修改上下文）
+  diagramType?: string; // generate 模式：图表类型（类图/时序图/用例图/流程图/ER 图等）
+}
+
+/**
  * AI 流式输出分块
  * - start: 流开始
  * - content: 文本内容增量
