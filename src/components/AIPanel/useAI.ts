@@ -53,7 +53,7 @@ export interface UseAIReturn {
 
 /**
  * AI 面板交互逻辑（M2）：
- * - interpret：导出 xmlsvg（优先）或缩放后的 PNG，流式打印分析文本
+ * - interpret：导出 xml（优先，读取当前图表状态）或缩放后的 PNG，流式打印分析文本
  * - generate：一次性生成（新文件）或 多轮迭代修改（当前文件，携带 currentXml 上下文）
  * - loadTemplate：一键载入内置模板（空白类图/时序图/ER 图）
  * - rollback：撤销最近一次对当前文件的 AI 修改（回滚到修改前快照）
@@ -87,7 +87,11 @@ export function useAI(): UseAIReturn {
 
   const appendContent = useCallback((id: string, content: string) => {
     setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, content: m.content + content } : m))
+      prev.map((m) =>
+        m.id === id
+          ? { ...m, content: m.content + content, thinking: false }
+          : m
+      )
     );
   }, []);
 
@@ -107,6 +111,7 @@ export function useAI(): UseAIReturn {
         id: generateId(),
         role: "assistant",
         content: "",
+        thinking: true,
         mode: "interpret",
         createdAt: Date.now(),
       };
@@ -117,12 +122,12 @@ export function useAI(): UseAIReturn {
       abortRef.current = controller;
 
       try {
-        // 优先导出 xmlsvg（文本，远小于 PNG），失败则回退到缩放后的 PNG
+        // 优先导出 xml（原始图表 XML，直接读取当前图表状态，最准确），失败则回退到缩放后的 PNG
         let xml: string | undefined;
         let image: string | undefined;
         try {
-          const result = await exportDiagram("xmlsvg");
-          xml = result.xml || result.data;
+          const result = await exportDiagram("xml");
+          xml = result.xml;
         } catch {
           try {
             const png = await exportDiagram("png");
@@ -131,6 +136,7 @@ export function useAI(): UseAIReturn {
             patchMessage(assistantMsg.id, {
               content: `导出图表失败：${err instanceof Error ? err.message : String(err)}`,
               error: true,
+              thinking: false,
             });
             return;
           }
@@ -145,16 +151,37 @@ export function useAI(): UseAIReturn {
               patchMessage(assistantMsg.id, {
                 content: chunk.error ?? "分析失败",
                 error: true,
+                thinking: false,
               });
+            } else if (chunk.type === "end") {
+              // 模型异常空回复：清除思考状态并给出提示，避免转圈残留
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsg.id && !m.content && !m.error
+                    ? { ...m, thinking: false, content: "（未收到模型返回内容，请重试）" }
+                    : m
+                )
+              );
             }
           },
           controller.signal
         );
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (err instanceof DOMException && err.name === "AbortError") {
+          // 中断时清除「正在思考」指示，避免残留的转圈状态
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsg.id
+                ? { ...m, thinking: false, content: m.content || "已停止" }
+                : m
+            )
+          );
+          return;
+        }
         patchMessage(assistantMsg.id, {
           content: `请求失败：${err instanceof Error ? err.message : String(err)}`,
           error: true,
+          thinking: false,
         });
       } finally {
         setLoading(false);
@@ -182,7 +209,8 @@ export function useAI(): UseAIReturn {
       const assistantMsg: ChatMessage = {
         id: generateId(),
         role: "assistant",
-        content: "正在生成图表…",
+        content: "",
+        thinking: true,
         mode: "generate",
         createdAt: Date.now(),
       };
@@ -214,6 +242,7 @@ export function useAI(): UseAIReturn {
               patchMessage(assistantMsg.id, {
                 content: chunk.error ?? "生成失败",
                 error: true,
+                thinking: false,
               });
             }
           },
@@ -225,6 +254,7 @@ export function useAI(): UseAIReturn {
           patchMessage(assistantMsg.id, {
             content: "未能从模型输出中解析出有效的 <mxCell> 片段，请重试。",
             error: true,
+            thinking: false,
           });
           return;
         }
@@ -241,6 +271,7 @@ export function useAI(): UseAIReturn {
           patchMessage(assistantMsg.id, {
             content: "已按指令修改当前图表。",
             xml: cells,
+            thinking: false,
           });
           toast({ title: "已更新图表", variant: "success" });
         } else {
@@ -255,14 +286,26 @@ export function useAI(): UseAIReturn {
           patchMessage(assistantMsg.id, {
             content: "已生成图表，并加载到编辑器。",
             xml: cells,
+            thinking: false,
           });
           toast({ title: "已生成图表", variant: "success" });
         }
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (err instanceof DOMException && err.name === "AbortError") {
+          // 中断时清除「正在思考」指示，避免残留的转圈状态
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsg.id
+                ? { ...m, thinking: false, content: m.content || "已停止" }
+                : m
+            )
+          );
+          return;
+        }
         patchMessage(assistantMsg.id, {
           content: `请求失败：${err instanceof Error ? err.message : String(err)}`,
           error: true,
+          thinking: false,
         });
       } finally {
         setLoading(false);

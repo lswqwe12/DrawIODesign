@@ -366,7 +366,9 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
           }, 10000),
         };
         exportWaitersRef.current.push(waiter);
-        drawioRef.current.exportDiagram({ format });
+        // react-drawio 1.0.7 的类型未收录 "xml" 导出格式（ExportFormats 缺失 xml），
+        // 但 embed.diagrams.net 实际支持；此处强制断言以透传该格式。
+        drawioRef.current.exportDiagram({ format: format as never });
       });
     },
     []

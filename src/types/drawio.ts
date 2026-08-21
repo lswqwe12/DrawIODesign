@@ -1,7 +1,17 @@
 /**
  * draw.io 导出格式
+ * 注意："xml" 返回原始图表 XML（仅 `xml` 字段），用于读取当前图表状态，
+ * 比 xmlsvg（SVG + 内嵌 XML）更适合 AI 解读场景；react-drawio 1.0.7 的
+ * ExportFormats 类型遗漏了 "xml"，实际 embed.diagrams.net 支持该格式。
  */
-export type ExportFormat = "html" | "html2" | "svg" | "xmlsvg" | "png" | "xmlpng";
+export type ExportFormat =
+  | "html"
+  | "html2"
+  | "svg"
+  | "xmlsvg"
+  | "png"
+  | "xmlpng"
+  | "xml";
 
 /**
  * DrawIoEmbed 的 URL 参数配置

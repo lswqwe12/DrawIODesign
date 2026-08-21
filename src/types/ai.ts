@@ -58,5 +58,6 @@ export interface ChatMessage {
   mode?: AIMode;
   xml?: string; // 生成模式下携带的最终 mxCell 片段
   error?: boolean; // 该消息是否以错误/失败结束（用于渲染「重试」按钮）
+  thinking?: boolean; // 是否正在等待模型返回（渲染「正在思考」转圈指示器）
   createdAt: number;
 }

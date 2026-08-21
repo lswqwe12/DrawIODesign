@@ -67,3 +67,76 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* AI 助手回答的 Markdown 渲染样式（配合 react-markdown + remark-gfm） */
+@layer components {
+  .markdown-body {
+    @apply break-words text-sm leading-relaxed;
+  }
+  .markdown-body > :first-child {
+    @apply mt-0;
+  }
+  .markdown-body > :last-child {
+    @apply mb-0;
+  }
+  .markdown-body p {
+    @apply my-1.5;
+  }
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    @apply mb-1 mt-3 font-semibold;
+  }
+  .markdown-body h1 {
+    @apply text-base;
+  }
+  .markdown-body h2 {
+    @apply text-[15px];
+  }
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    @apply text-sm;
+  }
+  .markdown-body ul {
+    @apply my-1.5 list-disc pl-5;
+  }
+  .markdown-body ol {
+    @apply my-1.5 list-decimal pl-5;
+  }
+  .markdown-body li {
+    @apply my-0.5;
+  }
+  .markdown-body code {
+    @apply rounded bg-secondary px-1 py-0.5 font-mono text-[13px];
+  }
+  .markdown-body pre {
+    @apply my-2 overflow-x-auto rounded-md bg-secondary p-3 text-[13px];
+  }
+  .markdown-body pre code {
+    @apply rounded-none bg-transparent p-0;
+  }
+  .markdown-body a {
+    @apply text-primary underline underline-offset-2;
+  }
+  .markdown-body strong {
+    @apply font-semibold;
+  }
+  .markdown-body blockquote {
+    @apply my-2 border-l-2 border-border pl-3 text-muted-foreground;
+  }
+  .markdown-body table {
+    @apply my-2 w-full border-collapse text-[13px];
+  }
+  .markdown-body th,
+  .markdown-body td {
+    @apply border border-border px-2 py-1 text-left;
+  }
+  .markdown-body hr {
+    @apply my-3 border-border;
+  }
+}

@@ -21,7 +21,9 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-drawio": "^1.0.7",
+    "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.9",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.6.0",
     "zustand": "^5.0.2"
   },

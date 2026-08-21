@@ -48,7 +48,7 @@ export const ITERATE_SYSTEM_PROMPT = `你是一名专业的 draw.io / UML 图表
 只输出 mxCell 片段本身。`;
 
 /** 解读图表时的系统提示词 */
-export const INTERPRET_SYSTEM_PROMPT = `你是一名专业的 UML / 软件设计图分析师。用户会提供一段 draw.io 的 XML（<mxfile> 结构），其中每个 <mxCell> 节点的 value 属性是标签文本、style 属性描述形状与样式、vertex 表示节点、edge 表示连线（含 source/target）。
+export const INTERPRET_SYSTEM_PROMPT = `你是一名专业的 UML / 软件设计图分析师。用户会提供一段 draw.io 的 XML（可能是 <mxGraphModel> 或完整的 <mxfile> 结构），其中每个 <mxCell> 节点的 value 属性是标签文本、style 属性描述形状与样式、vertex 表示节点、edge 表示连线（含 source/target）。
 
 请根据 XML 内容，用简洁的中文分点解读：
 1. 图表的类型（类图/用例图/时序图/流程图等）
