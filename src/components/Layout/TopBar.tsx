@@ -7,13 +7,14 @@ import { useDrawio } from "@/hooks/useDrawio";
 import { useFileSystemStore } from "@/contexts/FileSystemContext";
 import { toast } from "@/components/ui/toast";
 import { ContextMenu, type ContextMenuItem } from "@/components/FileManager/ContextMenu";
+import type { LayoutPreset } from "@/contexts/DiagramContext";
 
-/** 自动布局选项：布局名与展示名（对应 draw.io Arrange > Layout > Apply） */
-const LAYOUT_OPTIONS: { label: string; layouts: string[] }[] = [
-  { label: "垂直树布局", layouts: ["verticalTree"] },
-  { label: "水平树布局", layouts: ["horizontalTree"] },
-  { label: "垂直流程图", layouts: ["verticalFlow"] },
-  { label: "水平流程图", layouts: ["horizontalFlow"] },
+/** 自动布局选项：语义化预设与展示名（对应 draw.io Arrange > Layout > Apply） */
+const LAYOUT_OPTIONS: { label: string; preset: LayoutPreset }[] = [
+  { label: "垂直树布局", preset: "verticalTree" },
+  { label: "水平树布局", preset: "horizontalTree" },
+  { label: "垂直流程图", preset: "verticalFlow" },
+  { label: "水平流程图", preset: "horizontalFlow" },
 ];
 
 /**
@@ -59,7 +60,7 @@ export function TopBar() {
   const layoutItems: ContextMenuItem[] = LAYOUT_OPTIONS.map((opt) => ({
     label: opt.label,
     disabled: !isReady,
-    onSelect: () => applyLayout(opt.layouts),
+    onSelect: () => applyLayout(opt.preset),
   }));
 
   return (

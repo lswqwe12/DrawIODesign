@@ -38,6 +38,30 @@ interface ConfirmRequest {
   resolve: (choice: UnsavedChoice) => void;
 }
 
+/** 自动布局预设（语义化名称，门面负责映射为 draw.io layout action 的布局条目） */
+export type LayoutPreset =
+  | "verticalTree"
+  | "horizontalTree"
+  | "verticalFlow"
+  | "horizontalFlow";
+
+/** draw.io layout action 的单个布局条目（{layout, config}） */
+interface DrawioLayoutEntry {
+  layout: string;
+  config: Record<string, string>;
+}
+
+/**
+ * 预设 -> draw.io ELK 布局条目映射。
+ * 语义对照：垂直=自顶向下(DOWN)、水平=自左向右(RIGHT)；树用 elkTree、流程用 elkLayered。
+ */
+const LAYOUT_PRESET_MAP: Record<LayoutPreset, DrawioLayoutEntry> = {
+  verticalTree: { layout: "elkTree", config: { "elk.direction": "DOWN" } },
+  horizontalTree: { layout: "elkTree", config: { "elk.direction": "RIGHT" } },
+  verticalFlow: { layout: "elkLayered", config: { "elk.direction": "DOWN" } },
+  horizontalFlow: { layout: "elkLayered", config: { "elk.direction": "RIGHT" } },
+};
+
 export interface DiagramContextValue {
   // ---- 多标签页状态 ----
   /** fileId -> DiagramState（多标签页模型） */
@@ -76,8 +100,8 @@ export interface DiagramContextValue {
   requestCloseFile: (fileId: string) => Promise<boolean>;
   saveDiagram: () => Promise<void>;
   clearDiagram: () => void;
-  /** 自动布局：调用 draw.io 布局动作（layouts 为布局名数组，如 ["verticalTree"]） */
-  applyLayout: (layouts: string[]) => void;
+  /** 自动布局：按语义化预设调用 draw.io 布局动作（门面内部映射为 layout action 条目） */
+  applyLayout: (preset: LayoutPreset) => void;
 }
 
 /** 导出结果：xml 为图表 XML，data 为导出内容（SVG 文本 / PNG data URL） */
@@ -508,10 +532,21 @@ export function DiagramProvider({ children }: { children: ReactNode }) {
     latestXmlRef.current = empty;
   }, []);
 
-  /** 自动布局：转发给 react-drawio 门面的 layout 动作（等价 Arrange > Layout > Apply） */
-  const applyLayout = useCallback((layouts: string[]) => {
-    if (!drawioRef.current || !layouts.length) return;
-    drawioRef.current.layout({ layouts });
+  /**
+   * 自动布局：转发给 react-drawio 门面的 layout 动作（等价 Arrange > Layout > Apply）。
+   *
+   * 注意：react-drawio 1.0.7 的类型把 `layouts` 声明为 `string[]`，但其运行时只是
+   * 原样透传。当前 embed.diagrams.net 的 layout action 已升级为 ELK 布局，期望
+   * `layouts` 是 `{layout, config}[]` 对象数组（旧格式 `["verticalTree"]` 会触发
+   * draw.io 弹窗报错 "Invalid Call: not found"），故此处映射为 ELK 布局条目。
+   * @see https://www.drawio.com/docs/reference/json-layout-specification/
+   */
+  const applyLayout = useCallback((preset: LayoutPreset) => {
+    if (!drawioRef.current) return;
+    const entry = LAYOUT_PRESET_MAP[preset];
+    drawioRef.current.layout({
+      layouts: [entry],
+    } as unknown as { layouts: string[] });
   }, []);
 
   const value = useMemo<DiagramContextValue>(
